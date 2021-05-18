@@ -50,17 +50,17 @@ for i in range(32):
         else:
             theta[i][j] = math.degrees(math.atan(x / y)) % 180
 
-imageFeatureVector = np.zeros((0, 0), float)
+cellsFeatureVector = np.zeros((4, 4, 1, 9), float)
 for k in range(0, 32, 8):  # image rows
     for m in range(0, 32, 8):  # image columns
-        featureVector8x8 = np.zeros(9)
+        featureVector8x8 = np.zeros((1, 9))
         for i in range(k, k + 8):  # cell rows
             for j in range(m, m + 8):  # cell columns
                 angle = theta[i][j]
                 if angle < 10:  # handling special cases
-                    featureVector8x8[0] += magnitude[i][j]
+                    featureVector8x8[0][0] += magnitude[i][j]
                 elif angle > 170:  # handling special cases
-                    featureVector8x8[8] += magnitude[i][j]
+                    featureVector8x8[0][8] += magnitude[i][j]
                 else:
                     # get the first middle value where angle falls in
                     startMid = (angle//10)*10 if (angle//10) % 20 != 0 else (angle//10)*10 - 10
@@ -70,11 +70,36 @@ for k in range(0, 32, 8):  # image rows
                     # get the amount of magnitude that will be added to that pin
                     currentPinValue = max(firstFraction, secondFraction) * magnitude[i][j]
                     # adding the value to it and the rest to the neighbor pin
-                    featureVector8x8[int(angle // 20)] += currentPinValue
+                    featureVector8x8[0][int(angle // 20)] += currentPinValue
                     midValue = (angle//20)*20 + 10
                     if angle < midValue:  # it's in the first half of the pin
-                        featureVector8x8[int(angle // 20 - 1)] += magnitude[i][j] - currentPinValue
+                        featureVector8x8[0][int(angle // 20 - 1)] += magnitude[i][j] - currentPinValue
                     else:
-                        featureVector8x8[int(angle // 20 + 1)] += magnitude[i][j] - currentPinValue
-        imageFeatureVector = np.append(imageFeatureVector, featureVector8x8)
+                        featureVector8x8[0][int(angle // 20 + 1)] += magnitude[i][j] - currentPinValue
+        cellsFeatureVector[int(k/8)][int(m/8)] = featureVector8x8
+
+
+def normalize(array, total):
+    if total == 0:
+        return array
+    result = np.zeros((1, 9), float)
+    for i in range(9):
+        result[0][i] = array[0][i] / total
+    return result
+
+
+blocksFeatureVector = np.zeros((3, 3, 36, 1), float)
+# concatenating feature vectors for each 4 cells to make a block feature vector
+for i in range(0, 3):  # imageFeatureVector rows
+    for j in range(0, 3):  # imageFeatureVector columns
+        # normalizing the cells before adding them to the block vector
+        featureVector16x16 = np.zeros((36, 1), float)
+        totalSum = sum(sum(cellsFeatureVector[i][j][0]) + sum(cellsFeatureVector[i][j + 1][0]) + cellsFeatureVector[i + 1][j][0] + cellsFeatureVector[i + 1][j + 1][0])
+        featureVector16x16[0:9, ] = np.transpose(normalize(cellsFeatureVector[i][j], totalSum))
+        featureVector16x16[9:18, ] = np.transpose(normalize(cellsFeatureVector[i][j + 1], totalSum))
+        featureVector16x16[18:27, ] = np.transpose(normalize(cellsFeatureVector[i + 1][j], totalSum))
+        featureVector16x16[27:36, ] = np.transpose(normalize(cellsFeatureVector[i + 1][j + 1], totalSum))
+
+        blocksFeatureVector[i][j] = featureVector16x16
+
 
