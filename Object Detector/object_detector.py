@@ -50,27 +50,31 @@ for i in range(32):
         else:
             theta[i][j] = math.degrees(math.atan(x / y)) % 180
 
-featureVector8x8 = np.zeros(9)
-for i in range(0, 8):
-    for j in range(0, 8):
-        angle = theta[i][j]
-        if angle < 10:  # handling special cases
-            featureVector8x8[0] += magnitude[i][j]
-        elif angle > 170:  # handling special cases
-            featureVector8x8[8] += magnitude[i][j]
-        else:
-            # get the first middle value where angle falls in
-            startMid = (angle//10)*10 if (angle//10) % 20 != 0 else (angle//10)*10 - 10
-            # calculate both fractions
-            firstFraction = abs(angle - startMid) / 20
-            secondFraction = 1 - firstFraction
-            # get the amount of magnitude that will be added to that pin
-            currentPinValue = max(firstFraction, secondFraction) * magnitude[i][j]
-            # adding the value to it and the rest to the neighbor pin
-            featureVector8x8[int(angle // 20)] += currentPinValue
-            midValue = (angle//20)*20 + 10
-            if angle < midValue:  # it's in the first half of the pin
-                featureVector8x8[int(angle // 20 - 1)] += magnitude[i][j] - currentPinValue
-            else:
-                featureVector8x8[int(angle // 20 + 1)] += magnitude[i][j] - currentPinValue
+imageFeatureVector = np.zeros((0, 0), float)
+for k in range(0, 32, 8):  # image rows
+    for m in range(0, 32, 8):  # image columns
+        featureVector8x8 = np.zeros(9)
+        for i in range(k, k + 8):  # cell rows
+            for j in range(m, m + 8):  # cell columns
+                angle = theta[i][j]
+                if angle < 10:  # handling special cases
+                    featureVector8x8[0] += magnitude[i][j]
+                elif angle > 170:  # handling special cases
+                    featureVector8x8[8] += magnitude[i][j]
+                else:
+                    # get the first middle value where angle falls in
+                    startMid = (angle//10)*10 if (angle//10) % 20 != 0 else (angle//10)*10 - 10
+                    # calculate both fractions
+                    firstFraction = abs(angle - startMid) / 20
+                    secondFraction = 1 - firstFraction
+                    # get the amount of magnitude that will be added to that pin
+                    currentPinValue = max(firstFraction, secondFraction) * magnitude[i][j]
+                    # adding the value to it and the rest to the neighbor pin
+                    featureVector8x8[int(angle // 20)] += currentPinValue
+                    midValue = (angle//20)*20 + 10
+                    if angle < midValue:  # it's in the first half of the pin
+                        featureVector8x8[int(angle // 20 - 1)] += magnitude[i][j] - currentPinValue
+                    else:
+                        featureVector8x8[int(angle // 20 + 1)] += magnitude[i][j] - currentPinValue
+        imageFeatureVector = np.append(imageFeatureVector, featureVector8x8)
 
