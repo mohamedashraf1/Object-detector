@@ -50,6 +50,7 @@ for i in range(32):
         else:
             theta[i][j] = math.degrees(math.atan(x / y)) % 180
 
+# extracting feature vector for each cell
 cellsFeatureVector = np.zeros((4, 4, 1, 9), float)
 for k in range(0, 32, 8):  # image rows
     for m in range(0, 32, 8):  # image columns
@@ -88,7 +89,8 @@ def normalize(array, total):
     return result
 
 
-blocksFeatureVector = np.zeros((3, 3, 36, 1), float)
+blocksCounter = 0
+blocksFeatureVector = np.zeros(324, float)  # 9 blocks x 36 values
 # concatenating feature vectors for each 4 cells to make a block feature vector
 for i in range(0, 3):  # imageFeatureVector rows
     for j in range(0, 3):  # imageFeatureVector columns
@@ -100,6 +102,7 @@ for i in range(0, 3):  # imageFeatureVector rows
         featureVector16x16[18:27, ] = np.transpose(normalize(cellsFeatureVector[i + 1][j], totalSum))
         featureVector16x16[27:36, ] = np.transpose(normalize(cellsFeatureVector[i + 1][j + 1], totalSum))
 
-        blocksFeatureVector[i][j] = featureVector16x16
+        blocksFeatureVector[blocksCounter:blocksCounter + 36, ] = featureVector16x16[:][0]
+        blocksCounter += 36
 
 
