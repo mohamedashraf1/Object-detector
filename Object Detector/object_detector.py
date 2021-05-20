@@ -143,4 +143,97 @@ def applyHog(fileName, outputFileName):
     writeDataFrame(featureVectorDataFrame, outputFileName)
 
 
-applyHog(trainingFileName, "training-output.csv")
+"""# **Prepare data for model**
+
+## get feature vector for training data
+"""
+
+applyHog(trainingFileName, "training-feature-vector.csv")
+
+"""## get feature vector for test data"""
+
+applyHog(testFileName, "test-feature-vector.csv")
+
+"""# **SVM**"""
+
+from sklearn import svm
+
+"""## read training files"""
+
+trainingFileName = "/content/training-feature-vector.csv"
+labelFileName = '/content/sample_data/mnist_train_small.csv'
+
+trainingDataFrame = pd.DataFrame()
+trainingDataFrame = pd.read_csv(trainingFileName)
+
+labelDataFrame = pd.DataFrame()
+labelDataFrame = pd.read_csv(labelFileName)
+
+"""## prepare data for model"""
+
+trainingList = list()
+for i in range(len(trainingDataFrame.columns)):
+    tempList = trainingDataFrame[f'{i}'].to_list()
+    trainingList.append(tempList)
+targetValues = labelDataFrame['6'].to_list()  # take the first label as col name
+
+print(labelDataFrame.head())
+
+"""## model computation"""
+
+clf = svm.SVC()
+clf.fit(trainingList, targetValues)
+
+"""### Save the model"""
+
+import pickle
+
+pickle.dump(clf, open('model.sav', 'wb'))
+
+"""## make prediction
+
+## load model
+"""
+
+loaded_model = pickle.load(open('model.sav', 'rb'))
+
+""" ### read test file
+
+"""
+
+testFileName = '/content/test-feature-vector.csv'
+testLabelFileName = '/content/sample_data/mnist_test.csv'
+
+testDataFrame = pd.DataFrame()
+testDataFrame = pd.read_csv(testFileName)
+
+testLabelDataFrame = pd.DataFrame()
+testLabelDataFrame = pd.read_csv(testLabelFileName)
+
+print(testLabelDataFrame.head())
+
+"""## prepare for prediction"""
+
+testList = list()
+for i in range(len(testDataFrame.columns)):
+    tempList = testDataFrame[f'{i}'].to_list()
+    testList.append(tempList)
+# take the first label as col name
+testTargetValues = testLabelDataFrame['7'].to_list()
+
+"""## get prediction for test values"""
+
+predicted = loaded_model.predict(testList)
+
+"""## get prediction for training values"""
+
+trainingPredicted = loaded_model.predict(trainingList)
+
+"""## get test accuracy"""
+
+from sklearn.metrics import accuracy_score
+
+print(accuracy_score(testTargetValues, predicted))
+
+print(accuracy_score(targetValues, trainingPredicted))
+
