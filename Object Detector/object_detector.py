@@ -126,19 +126,21 @@ def getImageFeatureVector(cellsFeatureVector, imageIndex):
 
 
 # writing results into an excel file
-def writeFeatureVector(DataFrame, fileName):
+def writeDataFrame(DataFrame, fileName):
     DataFrame.to_csv(fileName, index=False)
 
 
 # apply hog algorithm on a file and writing the results back into an excel file
 def applyHog(fileName, outputFileName):
+    # clear data frame before filling it
+    featureVectorDataFrame.drop(featureVectorDataFrame.iloc[:, :], inplace=True, axis=1)
     data_list = readFile(fileName)
     for imageIndex in range(len(data_list.index)):
         image = getImage(data_list, imageIndex)
         magnitude, theta = getMagnitudeAndTheta(image)
         cellsFeatureVector = extractCellsFeatureVector(magnitude, theta)
         getImageFeatureVector(cellsFeatureVector, imageIndex)
-        writeFeatureVector(featureVectorDataFrame, outputFileName)
+    writeDataFrame(featureVectorDataFrame, outputFileName)
 
 
-# applyHog(trainingFileName, "training-output.csv")
+applyHog(trainingFileName, "training-output.csv")
